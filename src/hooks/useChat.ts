@@ -1,82 +1,92 @@
 // src/hooks/useChat.ts
-import { useEffect, useRef, useState } from "react";
-import * as api from "../services/api";
-import { socketConnect } from "../services/socket";
-import type { Message } from "../types/chat";
-import { v4 as uuidv4 } from "uuid";
+import { useState, useEffect, useRef } from "react";
+import { createSession, sendMessage as apiSendMessage } from "../services/api";
 
 /**
- * useChat
- * - creates a session on mount
- * - returns messages, sendMessage, reset
+ * ChatMessage type used by UI components.
  */
-export function useChat() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const socketRef = useRef<any>(null);
+export type ChatMessage = {
+  id?: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  docs?: any[]; // optional list of documents returned by backend
+  createdAt?: string;
+};
 
+export function useChat(initialSessionId?: string) {
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId || null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const loadingRef = useRef(false);
+
+  // create session when hook mounts or when sessionId is null
   useEffect(() => {
     let mounted = true;
     (async () => {
-      try {
-        const sid = await api.createSession();
-        if (!mounted) return;
-        setSessionId(sid);
-
-        const hist = await api.getSessionHistory(sid);
-        if (!mounted) return;
-        // hist may be array of {role,content} objects
-        setMessages(hist || []);
-
-        // connect socket and listen
-        socketRef.current = socketConnect(sid);
-        socketRef.current.on("assistant_message", (payload: any) => {
-          setMessages(prev => [...prev, { role: "assistant", content: payload.content, id: uuidv4() }]);
-        });
-      } catch (err) {
-        console.error("useChat init error", err);
+      if (!sessionId) {
+        try {
+          const s = await createSession();
+          if (mounted) setSessionId(s);
+        } catch (err) {
+          console.error("createSession failed:", err);
+        }
       }
     })();
-
     return () => {
       mounted = false;
-      if (socketRef.current) socketRef.current.disconnect();
     };
-  }, []);
+  }, [sessionId]); // include sessionId to satisfy eslint/react-hooks
 
-  async function sendMessage(content: string) {
-    if (!sessionId) throw new Error("No session");
-    // immediate local echo
-    const userMsg: Message = { role: "user", content, id: uuidv4() };
-    setMessages(prev => [...prev, userMsg]);
+  // sendMessage - public API (used by ChatInterface)
+  async function sendMessage(userText: string) {
+    if (!sessionId) {
+      console.warn("useChat: sessionId not ready yet");
+      return;
+    }
+
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: userText,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((m) => [...m, userMsg]);
 
     try {
-      // send to backend (response arrives via socket)
-      await api.sendMessage(sessionId, content);
+      loadingRef.current = true;
+      const res = await apiSendMessage(sessionId, userText);
+      const assistantMsg: ChatMessage = {
+        role: "assistant",
+        content: res.reply || "",
+        docs: res.docs || [],
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((m) => [...m, assistantMsg]);
     } catch (err) {
-      console.error("sendMessage error", err);
-      // optionally append an error assistant message
-      setMessages(prev => [...prev, { role: "assistant", content: "Error sending message.", id: uuidv4() }]);
+      console.error("sendMessage failed:", err);
+      const errMsg: ChatMessage = {
+        role: "assistant",
+        content: "Sorry — an error occurred contacting the server.",
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((m) => [...m, errMsg]);
+    } finally {
+      loadingRef.current = false;
     }
   }
 
-  async function reset() {
-    if (!sessionId) return;
-    try {
-      await api.resetSession(sessionId);
-      // create new session
-      const sid = await api.createSession();
-      setSessionId(sid);
-      setMessages([]);
-      if (socketRef.current) socketRef.current.disconnect();
-      socketRef.current = socketConnect(sid);
-      socketRef.current.on("assistant_message", (payload: any) => {
-        setMessages(prev => [...prev, { role: "assistant", content: payload.content, id: uuidv4() }]);
-      });
-    } catch (err) {
-      console.error("reset error", err);
-    }
+  function reset() {
+    setMessages([]);
+    // create new session
+    (async () => {
+      try {
+        const s = await createSession();
+        setSessionId(s);
+      } catch (err) {
+        console.error("reset createSession failed:", err);
+      }
+    })();
   }
 
   return { sessionId, messages, sendMessage, reset };
 }
+
+export default useChat;
