@@ -1,41 +1,75 @@
 // src/components/Chat/Message.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { ChatMessage } from "../../hooks/useChat";
 
 type Props = {
-  message: ChatMessage;
+  message: ChatMessage & { loading?: boolean }; // helper hint: messages may carry loading flag
 };
 
-const Message: React.FC<Props> = ({ message }) => {
-  const { role, content, docs } = message;
+function renderParagraphs(text?: string) {
+  if (!text) return null;
+  // split paragraphs on two newlines and preserve single-line breaks inside paragraphs
+  const paras = String(text).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  return paras.map((p, i) => <p key={i} className="message-paragraph">{p}</p>);
+}
 
-  const isUser = role === "user";
-  const containerClass = isUser ? "message message-user" : "message message-assistant";
+const TypingDots: React.FC = () => (
+  <div className="typing-dots" aria-hidden>
+    <span className="dot" />
+    <span className="dot" />
+    <span className="dot" />
+  </div>
+);
+
+const Message: React.FC<Props> = ({ message }) => {
+  const isUser = message.role === "user";
+  const isAssistant = message.role === "assistant";
+
+  // text shown by typed animation
+  const [displayed, setDisplayed] = useState<string>(isUser ? (message.content || "") : "");
+
+  useEffect(() => {
+    // If message gets replaced/updated (e.g. loading -> content), reset displayed
+    setDisplayed(isUser ? (message.content || "") : "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message?.id]); // only restart animation when message identity changes
+
+  useEffect(() => {
+    // For assistant messages with content => type out char-by-char
+    if (isAssistant && !message.loading && message.content) {
+      let i = 0;
+      const full = String(message.content);
+      setDisplayed(""); // start clean
+      const speed = 14; // ms per character (adjust to taste)
+      const interval = setInterval(() => {
+        i++;
+        setDisplayed(full.slice(0, i));
+        if (i >= full.length) clearInterval(interval);
+      }, speed);
+      return () => clearInterval(interval);
+    }
+    // For user or loading cases we don't run the typing interval here
+    return;
+  }, [isAssistant, message.loading, message.content]);
 
   return (
-    <div className={containerClass} role={isUser ? "article" : "article"}>
+    <div className={`message-row ${isUser ? "user" : "assistant"}`}>
       <div className="message-bubble">
-        <div className="message-content">{content}</div>
+        {/* Header label for assistant */}
+        {!isUser && <div className="message-role">Assistant</div>}
 
-        {/* If backend returned supporting docs, show small summary links */}
-        {Array.isArray(docs) && docs.length > 0 && (
-          <div className="message-docs">
-            <strong>References:</strong>
-            <ul>
-              {docs.map((d: any, idx: number) => (
-                <li key={d.id ?? idx}>
-                  {d.meta?.title ? `${d.meta.title}` : d.id}
-                  {d.meta?.url ? (
-                    <>
-                      {" — "}
-                      <a href={d.meta.url} target="_blank" rel="noreferrer">
-                        link
-                      </a>
-                    </>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+        {/* Loading / typing indicator */}
+        {message.loading ? (
+          <div className="message-loading">
+            <div className="loading-text">Assistant is typing</div>
+            <TypingDots />
+          </div>
+        ) : (
+          // final content area: show typed text (with paragraph rendering)
+          <div className="message-content">
+            {/* If we have the typed text available, render paragraphs from it.
+                Use displayed during animation to avoid rendering incomplete markup */}
+            {renderParagraphs(displayed)}
           </div>
         )}
       </div>

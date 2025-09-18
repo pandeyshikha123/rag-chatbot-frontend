@@ -1,13 +1,218 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* src/index.css
+   Replace the whole file with this */
+
+:root{
+  --bg: #f3f6f8;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #2563eb; /* blue */
+  --accent-2: #10b981; /* green */
+  --user-bubble: #e6ffed;
+  --assistant-bubble: #ffffff;
+  --shadow: 0 8px 24px rgba(16,24,40,0.06);
+  --radius: 12px;
+  --max-width: 920px;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Use a neutral modern system font stack similar to ChatGPT */
+html,body,#root{
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+               Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #0f172a;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+/* App shell */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 8px;
+}
+.header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #0f172a;
+}
+
+/* Main chat container - centered and consistent size */
+.chat-container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 20px 16px 48px;
+  background: transparent;
+}
+
+/* Chat card (the visible box) */
+.chat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  min-height: 64vh; /* keeps the page filled before/after messages */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+/* Top controls row */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Reset button */
+.btn-reset {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+.btn-reset:hover { border-color: #9ca3af; transform: translateY(-1px); }
+
+/* Message area scrollable */
+.message-area {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Message bubbles container rows */
+.message-row {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+}
+
+/* Assistant (left) and user (right) alignments */
+.assistant {
+  justify-content: flex-start;
+}
+.user {
+  justify-content: flex-end;
+}
+
+/* Bubble styles */
+.bubble {
+  max-width: 76%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #0f172a;
+  box-shadow: 0 1px 0 rgba(15,23,42,0.03);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* assistant bubble */
+.bubble.assistant {
+  background: var(--assistant-bubble);
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+}
+
+/* user bubble */
+.bubble.user {
+  background: var(--user-bubble);
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+}
+
+/* Small header for assistant bubble */
+.bubble .meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* References list styling */
+.references {
+  margin-top: 8px;
+  padding-left: 18px;
+}
+.references a { color: var(--accent); text-decoration: underline; }
+
+/* Footer input row */
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px dashed #eef2f7;
+}
+
+/* textarea */
+.input-row textarea {
+  flex: 1 1 auto;
+  min-height: 44px;
+  max-height: 120px;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6eef6;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+}
+
+/* send button */
+.btn-send {
+  background: linear-gradient(180deg,var(--accent), #1e40af);
+  border: none;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(37,99,235,0.18);
+}
+.btn-send:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Loader (small spinner) */
+.loader {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,0.08);
+  border-top-color: var(--accent);
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 720px) {
+  :root { --max-width: 700px; }
+  .bubble { max-width: 88%; font-size: 15px; }
+  .chat-card { padding: 14px; min-height: 64vh; }
 }
