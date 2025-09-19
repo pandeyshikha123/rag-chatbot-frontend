@@ -1,50 +1,105 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+---
 
-## Available Scripts
+#  RAG Chatbot — Frontend
 
-In the project directory, you can run:
+```markdown
+# RAG Chatbot — Frontend
 
-### `npm start`
+React + TypeScript frontend for the RAG chatbot.  
+Communicates with backend via REST API (Axios).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+---
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Features
 
-### `npm test`
+- Chat interface with user + assistant messages
+- Session management with backend
+- Styled input + send button
+- Loader while waiting for reply
+- Friendly fallback for unmatched queries
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Project Structure
+rag-chatbot-frontend/
+├── src/
+│ ├── components/Chat/ # ChatInterface, MessageList, Message, MessageInput
+│ ├── hooks/ # useChat.ts
+│ ├── services/ # api.ts
+│ └── index.tsx
+├── public/
+├── package.json
+├── .env
+└── README.md
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## ⚙️ Setup
 
-### `npm run eject`
+### 1. Clone and Install
+```bash
+git clone https://github.com/pandeyshikha123/rag-chatbot-frontend.git
+cd rag-chatbot-frontend
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+2. Environment Variables
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Create .env in the root:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+REACT_APP_API_BASE=http://localhost:4000
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## Learn More
+For production (Vercel), set in dashboard:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+REACT_APP_API_BASE=https://your-backend.onrender.com
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-=======
-# rag-chatbot-frontend
-React frontend for RAG news chatbot with real-time chat
+3. Run Development Server
+npm start
+
+
+App opens at:
+http://localhost:3000
+
+4. Build for Production
+npm run build
+
+🖥 Usage
+
+Open frontend in browser.
+
+On page load, a new session is created with backend.
+
+Type your query in the input box → press Send.
+
+Assistant shows search-based response with documents.
+
+☁️ Deployment
+Vercel
+
+Import repo in Vercel.
+
+Set env variable:
+
+REACT_APP_API_BASE=https://rag-chatbot-backend-t4ly.onrender.com
+
+
+Deploy.
+
+Frontend live at:
+https://rag-chatbot-frontend-mauve.vercel.app/
+
+🛠 Troubleshooting
+
+Requests going to REACT_APP_API_BASE= https://rag-chatbot-backend-t4ly.onrender.com in URL
+→ You mistakenly included env var in string. Must use process.env.REACT_APP_API_BASE.
+
+CORS error
+→ Set FRONTEND_ORIGIN in backend .env to your frontend URL.
+
+Assistant replies empty
+→ Ensure backend ingestion script (ingestNews.js) ran before queries.
+
+
 
